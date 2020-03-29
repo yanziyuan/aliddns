@@ -14,5 +14,7 @@
 上传aliddns.jar到群晖的文件夹，本人上传到opt文件夹下，路径是/volume1/opt/aliddns.jar，设置定时启动任务，在计划任务中新增定时脚本，间隔10分钟，最后时间23:50，脚本代码如下
 
 #!/bin/sh
+
 source /etc/profile
+
 java -jar /volume1/opt/aliddns.jar AccessKeyID AccessKeySecret quans.top testipv4 A
