@@ -111,23 +111,35 @@ public class DDNS {
 	}
 
 	public static void main(String[] args) {
-		// 设置鉴权参数，初始化客户端
-		// 地域ID 参考https://help.aliyun.com/knowledge_detail/40654.html?spm=5176.13910061.0.0.5af422c8KhBIfU&aly_as=hV5o5h29N
-		DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", // 地域ID
-				args[0], // 您的AccessKey ID
-				args[1]);// 您的AccessKey Secret
-		IAcsClient client = new DefaultAcsClient(profile);
-		setIp(client, args[2], args[3], args[4]);
+
+		// 地域ID参考https://help.aliyun.com/knowledge_detail/40654.html?spm=5176.13910061.0.0.5af422c8KhBIfU&aly_as=hV5o5h29N
+		if (args.length >= 5) {
+
+			DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", // 地域ID
+					args[0], // 您的AccessKey ID
+					args[1]);// 您的AccessKey Secret
+			
+			IAcsClient client = new DefaultAcsClient(profile);
+
+			for (int i = 2; i < args.length; i += 3) {
+				if ((args.length - i) >= 3) {
+					checkAndUpdateIp(client, args[i], args[i + 1], args[i + 2]);
+				}
+			}
+
+		} else {
+			System.out.println("Parameter error!");
+		}
 	}
 
 	/**
 	 * 
 	 * @param client
-	 * @param domainName  您的域名，如baidu.com
-	 * @param ipRRKeyWord 您的主机记录，如www
+	 * @param domainName  您的域名，如 baidu.com
+	 * @param ipRRKeyWord 您的主机记录，如 www
 	 * @param type        ipv4 填 A ，ipv6 填 AAAA
 	 */
-	private static void setIp(IAcsClient client, String domainName, String ipRRKeyWord, String type) {
+	private static void checkAndUpdateIp(IAcsClient client, String domainName, String ipRRKeyWord, String type) {
 
 		DDNS ddns = new DDNS();
 		// 查询指定二级域名的最新解析记录
@@ -155,6 +167,7 @@ public class DDNS {
 			String recordsValue = record.getValue();
 			// 当前主机公网IP
 			String currentHostIP = null;
+
 			currentHostIP = ddns.getCurrentHostIP(type);
 
 			System.out.println("当前主机公网IP为：" + currentHostIP);
@@ -174,7 +187,7 @@ public class DDNS {
 						.updateDomainRecord(updateDomainRecordRequest, client);
 
 				System.out.println(JSON.toJSON(updateDomainRecordResponse));
-				System.out.println("Thank you for using this tool，Please click on my website：www.quans.top!");
+				System.out.println("Update ip success! 此软件作者网站：www.quans.top，帮您找到淘宝天猫隐藏大额优惠券，感谢您的支持！");
 			}
 		}
 	}
