@@ -2,34 +2,30 @@ aliddns
 
 更新本地公网ipv4、ipv6到阿里云域名
 
-阿里示例代码地址：https://help.aliyun.com/document_detail/141482.html?spm=5176.12818093.0.0.11ae16d0mf0N6g
+Windows中使用方法：
 
-使用方法：
+1、阿里云账户创建RAM子用户，添加“管理云解析（DNS）的权限”权限
 
-1、创建RAM子用户，添加“管理云解析（DNS）的权限”权限
+2、使用java1.8
 
-2、建议使用java8
+3、在release中下载.zip包，解压得到.jar包(1.1版本以上支持一次更新多个ip）
 
-3、在release中下载jar包(1.1版本以上支持一次设置多个ip更新）
+4、运行：进入控制台，java -jar path\aliddns1.x.jar AccessKeyID AccessKeySecret 域名 主机记录 类型 域名 主机记录 类型 （以此类推）...，注意以空格隔开
 
-4、运行：进入控制台，java -jar C:\Users\yanziyuan\Desktop\aliddns1.2.jar AccessKeyID AccessKeySecret 域名 主机记录 类型 域名 主机记录 类型 （以此类推）...，注意以空格隔开
+举例：java -jar C:\Users\yanziyuan\Desktop\aliddns1.2.jar AccessKeyID AccessKeySecret baidu.com testipv4 A quans.top testipv6 AAAA
 
-举例：
+群晖中使用方法：
 
-AccessKeyID：aaaaaaaaaaaaa，AccessKeySecret：bbbbbbbbbbbbbb，域名：quans.top，主机记录：testipv4，ipv4 type："A"，ipv6 type："AAAA"，
+1、套件中心安装java8
 
-那么命令为：java -jar C:\Users\yanziyuan\Desktop\aliddns1.2.jar aaaaaaaaaaaaa bbbbbbbbbbbbbb quans.top testipv4 A
+2、上传aliddns1.x.jar到群晖的文件夹，本人上传到opt文件夹下，文件属性可以看到路径是/volume1/opt/aliddns1.x.jar
 
-设置多个ip命令如下：java -jar C:\Users\yanziyuan\Desktop\aliddns1.2.jar aaaaaaaaaaaaa bbbbbbbbbbbbbb quans.top testipv4 A quans.top testipv6 AAAA
-
-群晖使用配置如下：
-
-套件中心安装java8，上传aliddns.jar到群晖的文件夹，本人上传到opt文件夹下，文件属性可以看到路径是/volume1/opt/aliddns.jar，设置定时启动任务，在计划任务中新增定时脚本，间隔=10分钟，最后运行时间23:50，脚本代码如下
+3、设置开机启动任务（注意：1.3版本开始不要设置定时循环执行任务，因为程序中已经执行循环，间隔10分钟。更改为此策略原因是：某些情况下获取公网IP超时导致抛出异常，但是群晖不杀死java进程，导致多个进程持续占用资源，且不能重启任务，1.3版本开始更换了获取ip的api接口，同时线程内部循环执行任务）
 
 #!/bin/sh
 
 source /etc/profile
 
-java -jar /volume1/opt/aliddns.jar AccessKeyID AccessKeySecret quans.top testipv4 A quans.top testipv6 AAAA
+java -jar /volume1/opt/aliddns1.x.jar AccessKeyID AccessKeySecret quans.top testipv4 A quans.top testipv6 AAAA
 
 最后打个广告：www.quans.top 淘宝天猫精选大额隐藏优惠券，你买东西有优惠，我也能拿到佣金，何乐而不为呢，感谢支持。
