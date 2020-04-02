@@ -15,10 +15,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
-
-//import java.util.regex.Matcher;
-//import java.util.regex.Pattern;
 
 /**
  * 动态域名解析
@@ -26,28 +22,17 @@ import java.util.Map;
 public class DDNS {
 
 	/**
-	 * 获取主域名的所有解析记录列表
-	 */
-	private DescribeDomainRecordsResponse describeDomainRecords(DescribeDomainRecordsRequest request,
-			IAcsClient client) {
-		try {
-			// 调用SDK发送请求
-			return client.getAcsResponse(request);
-		} catch (ClientException e) {
-			e.printStackTrace();
-			// 发生调用错误，抛出运行时异常
-			throw new RuntimeException();
-		}
-	}
-
-	/**
 	 * 获取当前主机公网IP
 	 */
 	private String getCurrentHostIP(String type) {
-		// 这里使用jsonip.com第三方接口获取本地IP
-		String jsonip = "https://ipv4.jsonip.com/";
+		// jsonip.com第三方接口获取本地IP(较慢)
+		// https://ipv4.jsonip.com/
+		// https://ipv6.jsonip.com/
+
+		// 由于jsonip.com 经常无法连接，故尝试更换 api 接口
+		String jsonip = "http://v4.ip.zxinc.org/getip";
 		if ("AAAA".equals(type)) {
-			jsonip = "https://ipv6.jsonip.com/";
+			jsonip = "http://v6.ip.zxinc.org/getip";
 		}
 		// 接口返回结果
 		String result = "";
@@ -57,7 +42,10 @@ public class DDNS {
 			URL url = new URL(jsonip);
 			HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 			urlConnection.setRequestMethod("GET");
+			urlConnection.setConnectTimeout(60000);
+			urlConnection.setReadTimeout(60000);
 			urlConnection.connect();
+
 			in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
 			String line;
 			while ((line = in.readLine()) != null) {
@@ -78,39 +66,17 @@ public class DDNS {
 
 		}
 
-		Gson gson = new Gson();
-		@SuppressWarnings("unchecked")
-		Map<String, String> map = gson.fromJson(result, Map.class);
-		return map.get("ip");
+		return result;
 
-//		// 正则表达式，提取xxx.xxx.xxx.xxx，将IP地址从接口返回结果中提取出来
-//		String rexp = "(\\d{1,3}\\.){3}\\d{1,3}";
-//		Pattern pat = Pattern.compile(rexp);
-//		Matcher mat = pat.matcher(result);
-//		String res = "";
-//		while (mat.find()) {
-//			res = mat.group();
-//			break;
-//		}
-//		return res;
-	}
-
-	/**
-	 * 修改解析记录
-	 */
-	private UpdateDomainRecordResponse updateDomainRecord(UpdateDomainRecordRequest request, IAcsClient client) {
-		try {
-			// 调用SDK发送请求
-			return client.getAcsResponse(request);
-		} catch (ClientException e) {
-			e.printStackTrace();
-			// 发生调用错误，抛出运行时异常
-			throw new RuntimeException();
-		}
+//		Gson gson = new Gson();
+//		@SuppressWarnings("unchecked")
+//		Map<String, String> map = gson.fromJson(result, Map.class);
+//		return map.get("ip");
 	}
 
 	public static void main(String[] args) {
 
+		// 阿里云示例代码：https://help.aliyun.com/document_detail/141482.html?spm=5176.12818093.0.0.11ae16d0mf0N6g
 		// 地域ID参考https://help.aliyun.com/knowledge_detail/40654.html?spm=5176.13910061.0.0.5af422c8KhBIfU&aly_as=hV5o5h29N
 		if (args.length >= 5) {
 
@@ -120,9 +86,21 @@ public class DDNS {
 
 			IAcsClient client = new DefaultAcsClient(profile);
 
-			for (int i = 2; i < args.length; i += 3) {
-				if ((args.length - i) >= 3) {
-					checkAndUpdateIp(client, args[i], args[i + 1], args[i + 2]);
+			while (true) {
+
+				for (int i = 2; i < args.length; i += 3) {
+					if ((args.length - i) >= 3) {
+						checkAndUpdateIp(client, args[i], args[i + 1], args[i + 2]);
+					}
+				}
+
+				try {
+
+					Thread.sleep(10 * 60 * 1000);
+
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 
@@ -151,28 +129,31 @@ public class DDNS {
 		// 解析记录类型
 		describeDomainRecordsRequest.setType(type);
 
-		DescribeDomainRecordsResponse describeDomainRecordsResponse = ddns
-				.describeDomainRecords(describeDomainRecordsRequest, client);
+		// 获取主域名的所有解析记录列表
+		DescribeDomainRecordsResponse describeDomainRecordsResponse = null;
+		try {
+			describeDomainRecordsResponse = client.getAcsResponse(describeDomainRecordsRequest);
+		} catch (ClientException e1) {
+			e1.printStackTrace();
+		}
 
-		System.out.println(gson.toJson((describeDomainRecordsResponse)));
+		System.out.println(gson.toJson(describeDomainRecordsResponse));
 
 		List<DescribeDomainRecordsResponse.Record> domainRecords = describeDomainRecordsResponse.getDomainRecords();
 		// 最新的一条解析记录
-
 		if (domainRecords.size() != 0) {
 			DescribeDomainRecordsResponse.Record record = domainRecords.get(0);
 			// 记录ID
 			String recordId = record.getRecordId();
 			// 记录值
 			String recordsValue = record.getValue();
-			// 当前主机公网IP
+
+			// 获取当前主机公网IP
 			String currentHostIP = null;
-
 			currentHostIP = ddns.getCurrentHostIP(type);
-
 			System.out.println("CurrentHost：" + currentHostIP);
 
-			if (!currentHostIP.equals(recordsValue)) {
+			if (currentHostIP.length() > 0 && !currentHostIP.equals(recordsValue)) {
 				System.out.println("Updating...");
 				// 修改解析记录
 				UpdateDomainRecordRequest updateDomainRecordRequest = new UpdateDomainRecordRequest();
@@ -184,14 +165,19 @@ public class DDNS {
 				updateDomainRecordRequest.setValue(currentHostIP);
 				// 解析记录类型
 				updateDomainRecordRequest.setType(type);
-				UpdateDomainRecordResponse updateDomainRecordResponse = ddns
-						.updateDomainRecord(updateDomainRecordRequest, client);
+				// 修改解析记录
+				UpdateDomainRecordResponse updateDomainRecordResponse = null;
+				try {
+					updateDomainRecordResponse = client.getAcsResponse(updateDomainRecordRequest);
+				} catch (ClientException e) {
+					e.printStackTrace();
+				}
 
 				System.out.println(gson.toJson(updateDomainRecordResponse));
 				if (recordId.equals(updateDomainRecordResponse.getRecordId())) {
 					System.out.println("Update success! " + ipRRKeyWord + "." + domainName + "->" + currentHostIP);
-					System.out.println();
 					System.out.println("此软件作者推广网站：www.quans.top，帮您找到淘宝天猫隐藏大额优惠券，安全稳定无广告，感谢您的支持！");
+					System.out.println();
 				} else {
 					System.out.println("Update failed！");
 				}
