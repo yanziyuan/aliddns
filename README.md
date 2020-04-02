@@ -1,6 +1,4 @@
-aliddns
-
-更新本地公网ipv4、ipv6到阿里云域名
+将本地动态公网ipv4、ipv6地址映射到阿里云域名，下载地址：https://github.com/yanziyuan/aliddns/releases
 
 Windows中使用方法：
 
