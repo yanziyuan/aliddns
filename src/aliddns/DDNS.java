@@ -131,16 +131,18 @@ public class DDNS {
 
 		// 获取主域名的所有解析记录列表
 		DescribeDomainRecordsResponse describeDomainRecordsResponse = null;
+		// 最新的一条解析记录
+		List<DescribeDomainRecordsResponse.Record> domainRecords = null;
 		try {
+
 			describeDomainRecordsResponse = client.getAcsResponse(describeDomainRecordsRequest);
+			System.out.println(gson.toJson(describeDomainRecordsResponse));
+			domainRecords = describeDomainRecordsResponse.getDomainRecords();
+
 		} catch (ClientException e1) {
 			e1.printStackTrace();
 		}
 
-		System.out.println(gson.toJson(describeDomainRecordsResponse));
-
-		List<DescribeDomainRecordsResponse.Record> domainRecords = describeDomainRecordsResponse.getDomainRecords();
-		// 最新的一条解析记录
 		if (domainRecords.size() != 0) {
 			DescribeDomainRecordsResponse.Record record = domainRecords.get(0);
 			// 记录ID
@@ -169,17 +171,16 @@ public class DDNS {
 				UpdateDomainRecordResponse updateDomainRecordResponse = null;
 				try {
 					updateDomainRecordResponse = client.getAcsResponse(updateDomainRecordRequest);
+					System.out.println(gson.toJson(updateDomainRecordResponse));
+					if (recordId.equals(updateDomainRecordResponse.getRecordId())) {
+						System.out.println("Update success! " + ipRRKeyWord + "." + domainName + "->" + currentHostIP);
+						System.out.println("此软件作者推广网站：www.quans.top，帮您找到淘宝天猫隐藏大额优惠券，安全稳定无广告，感谢您的支持！");
+						System.out.println();
+					} else {
+						System.out.println("Update failed！");
+					}
 				} catch (ClientException e) {
 					e.printStackTrace();
-				}
-
-				System.out.println(gson.toJson(updateDomainRecordResponse));
-				if (recordId.equals(updateDomainRecordResponse.getRecordId())) {
-					System.out.println("Update success! " + ipRRKeyWord + "." + domainName + "->" + currentHostIP);
-					System.out.println("此软件作者推广网站：www.quans.top，帮您找到淘宝天猫隐藏大额优惠券，安全稳定无广告，感谢您的支持！");
-					System.out.println();
-				} else {
-					System.out.println("Update failed！");
 				}
 			}
 		}
