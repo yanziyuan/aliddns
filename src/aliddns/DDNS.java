@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -80,26 +81,28 @@ public class DDNS {
 		// 地域ID参考https://help.aliyun.com/knowledge_detail/40654.html?spm=5176.13910061.0.0.5af422c8KhBIfU&aly_as=hV5o5h29N
 		if (args.length >= 5) {
 
-			DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", // 地域ID
-					args[0], // 您的AccessKey
-					args[1]);// 您的AccessKey
-
-			IAcsClient client = new DefaultAcsClient(profile);
-
 			while (true) {
 
-				for (int i = 2; i < args.length; i += 3) {
-					if ((args.length - i) >= 3) {
-						checkAndUpdateIp(client, args[i], args[i + 1], args[i + 2]);
-					}
-				}
-
 				try {
+
+					DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", // 地域ID
+							args[0], // 您的AccessKey
+							args[1]);// 您的AccessKey
+
+					IAcsClient client = new DefaultAcsClient(profile);
+
+					for (int i = 2; i < args.length; i += 3) {
+						if ((args.length - i) >= 3) {
+							checkAndUpdateIp(client, args[i], args[i + 1], args[i + 2]);
+						}
+					}
 
 					Thread.sleep(10 * 60 * 1000);
 
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (Exception e) {
+					// java.net.UnknownHostException: alidns.aliyuncs.com
 					e.printStackTrace();
 				}
 			}
@@ -136,7 +139,7 @@ public class DDNS {
 		try {
 
 			describeDomainRecordsResponse = client.getAcsResponse(describeDomainRecordsRequest);
-			System.out.println(gson.toJson(describeDomainRecordsResponse));
+			System.out.println(new Date() + " " + gson.toJson(describeDomainRecordsResponse));
 			domainRecords = describeDomainRecordsResponse.getDomainRecords();
 
 		} catch (ClientException e1) {
@@ -153,7 +156,7 @@ public class DDNS {
 			// 获取当前主机公网IP
 			String currentHostIP = null;
 			currentHostIP = ddns.getCurrentHostIP(type);
-			System.out.println("CurrentHost：" + currentHostIP);
+			System.out.println(new Date() + " CurrentHost：" + currentHostIP);
 
 			if (currentHostIP.length() > 0 && !currentHostIP.equals(recordsValue)) {
 				System.out.println("Updating...");
@@ -173,7 +176,8 @@ public class DDNS {
 					updateDomainRecordResponse = client.getAcsResponse(updateDomainRecordRequest);
 					System.out.println(gson.toJson(updateDomainRecordResponse));
 					if (recordId.equals(updateDomainRecordResponse.getRecordId())) {
-						System.out.println("Update success! " + ipRRKeyWord + "." + domainName + "->" + currentHostIP);
+						System.out.println(new Date() + " Update success! " + ipRRKeyWord + "." + domainName + "->"
+								+ currentHostIP);
 						System.out.println("此软件作者推广网站：www.quans.top，帮您找到淘宝天猫隐藏大额优惠券，安全稳定无广告，感谢您的支持！");
 						System.out.println();
 					} else {
