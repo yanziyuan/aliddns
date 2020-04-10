@@ -81,30 +81,23 @@ public class DDNS {
 		// 地域ID参考https://help.aliyun.com/knowledge_detail/40654.html?spm=5176.13910061.0.0.5af422c8KhBIfU&aly_as=hV5o5h29N
 		if (args.length >= 5) {
 
-			while (true) {
+			try {
 
-				try {
+				DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", // 地域ID
+						args[0], // 您的AccessKey
+						args[1]);// 您的AccessKey
 
-					DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", // 地域ID
-							args[0], // 您的AccessKey
-							args[1]);// 您的AccessKey
+				IAcsClient client = new DefaultAcsClient(profile);
 
-					IAcsClient client = new DefaultAcsClient(profile);
-
-					for (int i = 2; i < args.length; i += 3) {
-						if ((args.length - i) >= 3) {
-							checkAndUpdateIp(client, args[i], args[i + 1], args[i + 2]);
-						}
+				for (int i = 2; i < args.length; i += 3) {
+					if ((args.length - i) >= 3) {
+						checkAndUpdateIp(client, args[i], args[i + 1], args[i + 2]);
 					}
-
-					Thread.sleep(10 * 60 * 1000);
-
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (Exception e) {
-					// java.net.UnknownHostException: alidns.aliyuncs.com
-					e.printStackTrace();
 				}
+
+			} catch (Exception e) {
+				// java.net.UnknownHostException: alidns.aliyuncs.com
+				e.printStackTrace();
 			}
 
 		} else {
