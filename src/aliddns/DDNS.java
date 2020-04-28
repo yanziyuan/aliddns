@@ -44,7 +44,7 @@ public class DDNS {
 			jsonip = "http://v6.ip.zxinc.org/getip";
 
 			result = DDNS.getLocalIpv6Address();
-			if (result != null && !result.isEmpty()) {
+			if (!"".equals(result) && result != null && !result.isEmpty()) {
 				return result;
 			}
 		}
@@ -182,17 +182,17 @@ public class DDNS {
 
 					result = inetAddress.toString().replaceAll("/", "");
 					result = result.substring(0, result.indexOf("%"));
-//					System.out.println(result);
+					System.out.println("inetAddress:" + result);
 					count++;// windows下会分配临时ipv6，安装虚拟机会有多个ipv6，无法区分真实ipv6与临时ipv6，因此计数会大于1，群晖中使用应该只有一个
 				}
 			}
 		}
 
-		if (count == 1) {
-			return result;
-		} else {
-			return null;
+		if (count != 1) {
+			result = "";
 		}
+
+		return result;
 	}
 
 	public static void main(String[] args) {
